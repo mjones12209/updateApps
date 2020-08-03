@@ -5,19 +5,22 @@ import glob
 
 #directories / files for app
 
-appDir="/home/aether/AUR/update-apps/"
-folders=os.listdir("/home/aether/AUR/update-apps")
-gitList = "/home/aether/AUR/gitUrls"
-
 #TODO Run routines to enumerate apps and see which ones need updating and create files if they dont exists maybe create a folder for the user to store AUR apps
+
+appDir=os.environ['HOME'] + '/AUR/update-apps/'  #where are your apps located
+folders=os.listdir(appDir) #list of folders in app directory
+updateAppsNeeds = []
+gitList = "/home/aether/AUR/gitUrls"
+appUpdates = "/home/aether/AUR/appUpdates"
+
+
 
 
 def updateGitOrigin():
 
     #this function switches into each directory, cleans it, updates git from origin master, compiles source, then installs
+    #this is the loop that loops into each directory it then runs processes in each app directory, git clean, git pull, and makepkg
 
-    #this is the loop that loops into each directory it then runs processes in each app directory, git clean, git pull, makepkg, and pacman -U to install
-    #it also locates all .tar.*z files in each directory and uses the one with the latest ctime to install
     for folder in folders:
 
         #changes into app directory
@@ -25,30 +28,37 @@ def updateGitOrigin():
         print("Current Working Directory", os.getcwd())
 
         print("Running update routine for",folder)
-        print(subprocess.run(['git','pull','origin','master'],capture_output=True))
+        output = subprocess.run(['git','pull','origin','master'],capture_output=True)
+        match = re.search('Already up to date.', str(output))
 
-def updateApps():
-       
+        if not match:
+            updateAppsNeeds.append(folder)
+
+    ##TODO write updatable apps to a updateApps file and then be able to read them back in later to update them and also it need to be done right the first time each time
+    #an origin update is completed 
+    f = open(appUpdates,"w")
+    f.write(updateAppsNeeds)
+    f.close()
+
+    return updateAppsNeeds
+
+
+def updateApps(report):
 
     #clears directory
-    print("Running cleaing routines for",folder)
-    subprocess.run(['git','clean','-f'])
+    for app in report:
+        os.chdir(appDir + app)
+        print("Running cleaing routines for",app)
+        subprocess.run(['git','clean','-f'])
 
-    #compiles source with makepkg
-    print("Compiling source...")
-    print(subprocess.run(['makepkg','-si'],capture_output=True))
+        #compiles source with makepkg
+        print("Compiling source...")
+        print(subprocess.run(['makepkg','-si'],capture_output=True))
 
-    # #enumerates files, finds latest source compiled, installs compiled source
-    # files = glob.glob("./*.tar.*z")
-    # latest_file = max(files, key=os.path.getctime)
-    # print("Installing compiled source...")
-    # subprocess.run(['sudo','pacman','-U',latest_file],capture_output=True)
-        
+            
 def getGitUrls():
 
     #this functions compiles a list of aur apps in the update folders by getting the https* url from ./.git/config
-
-
     for folder in folders:
         #change into the directory and print name of directory
         os.chdir(appDir + folder)
@@ -62,12 +72,13 @@ def getGitUrls():
             if match:
                 matchUrl = match.group(0)
                 print("adding....",matchUrl)
-                g = open(gitList,'a')
+                g = open(gitList,'w')
                 g.write(matchUrl + '\n')
                 g.close()
             f.close()
         else:
             print(".git directory does not exists and is probably not a git repository")
+    return False
 
 def printTitle():
     title = "Welcome to Update Apps AUR Helper"
@@ -78,28 +89,42 @@ def resetHead():
         os.chdir(appDir + folder)
         print(subprocess.run(["git","fetch","origin"],capture_output=True))
         print(subprocess.run(["git","reset","--hard","origin/master"],capture_output=True))
+    return False
 
 def printMenu():
-    menu = ["1. Update Git Origin", "2. Get list of AUR git repository urls", "3.  Update Apps", "4. Reset Git Head"]
-    print(menu[0],"\n",menu[1])
+    menu = [" 1. Update Git Origin", "2. Get list of AUR git repository urls",  "3. Reset Git Head"]
+    print(menu[0],"\n",menu[1], "\n", menu[2])
 
 def getUserChoice():
     return input("What option would you like to pick?")
 
 def runOption(choice):
     if choice == "1":
-        updateGitOrigin()
+       return updateGitOrigin()
     elif choice == "2":
-        getGitUrls()
+        return getGitUrls()
     elif choice == "3":
-        updateApps()
-    elif choice == "4":
-        resetHead()
+        return resetHead()
 
 def main():
     printTitle()
     printMenu()
     choice = getUserChoice()
-    runOption(choice)
+    report = runOption(choice)
+
+    if report:
+        print("The follow apps needs to be updated: " + '\n', report)
+        while True:
+            print("Please enter y for yes or n for no...")
+            update = input("Would you like to update them now? y or n ")
+            if update == "y":
+                updateApps(report)
+                break
+            elif update == "n": 
+                print("Exiting...")
+                break
+            else:
+                continue
+
 
 main()
