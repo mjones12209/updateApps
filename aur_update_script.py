@@ -10,8 +10,8 @@ import glob
 appDir=os.environ['HOME'] + '/AUR/update-apps/'  #where are your apps located
 folders=os.listdir(appDir) #list of folders in app directory
 updateAppsNeeds = []
-gitList = "/home/aether/AUR/gitUrls"
-appUpdates = "/home/aether/AUR/appUpdates"
+gitList = os.environ['HOME'] + "/AUR/gitUrls"
+appUpdates = os.environ['HOME'] + "/AUR/appUpdates"
 
 
 
@@ -20,6 +20,11 @@ def updateGitOrigin():
 
     #this function switches into each directory, cleans it, updates git from origin master, compiles source, then installs
     #this is the loop that loops into each directory it then runs processes in each app directory, git clean, git pull, and makepkg
+
+    # if os.path.exists(appUpdates): 
+    #     f = open(appUpdates,"a")
+    # else: 
+    #     f = open(appUpdates,"x")
 
     for folder in folders:
 
@@ -36,9 +41,11 @@ def updateGitOrigin():
 
     ##TODO write updatable apps to a updateApps file and then be able to read them back in later to update them and also it need to be done right the first time each time
     #an origin update is completed 
-    f = open(appUpdates,"w")
-    f.write(updateAppsNeeds)
-    f.close()
+   
+
+    # f.write(updateAppsNeeds)
+    # f.close()
+   
 
     return updateAppsNeeds
 
