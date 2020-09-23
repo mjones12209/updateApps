@@ -63,15 +63,15 @@ def getUserChoice(menu):
 
     return choice
 
-def runOption(choice, updateAppNeeds):
+def runOption(choice, updateAppNeeds, folders):
     if choice == "1":
        return updateGitOrigin(updateAppNeeds)
-    if choice == "2":
+    elif choice == "2":
         updateApps(updateAppNeeds)
-    if choice == "3":
+    elif choice == "3":
         printReport(updateAppNeeds)
     elif choice == "4":
-        cleanApps(updateAppNeeds)
+        cleanApps(folders)
 
 def updateGitOrigin(report):
 
@@ -109,12 +109,54 @@ def printReport(report):
     print("You have the following apps that need to be updated:  ")
     print(report)
 
-def cleanApps(updateAppNeeds):
-    for app in updateAppNeeds:
-        os.chdir(appDir + app)
-        print("Running cleaing routines for",app)
-        subprocess.run(['git','clean','-f'])
+def cleanApps(appFolders):
 
+    appFolders.append("All Apps")
+    enumeratedFolders = enumerate(appFolders)
+    # print(appFolders[22])
+
+    for index,app in enumeratedFolders:
+        print(str(index+1) + '.',app)
+        lastIndexOfAppFolders = index
+
+    while True:
+        choice = input("Which app would you like to clean?")
+        if choice.isdigit():
+            if int(choice) < 1 or int(choice) > lastIndexOfAppFolders + 1:
+                print("Please enter a valid option.")
+                
+            else:
+                break
+        else:
+            print("Please enter a valid option.")
+
+    while True:
+        print("Are you sure you want to continue? This will delete all untracked files within the local git repo and reset the head. (y or n)")
+        continueClean = input()
+        if continueClean != 'y' and continueClean != 'n':
+            print("Please enter y or n")
+            continue
+        elif continueClean == 'y':
+            if choice == len(appFolders):
+                for app in appFolders:
+                    os.chdir(appDir + app)
+                    print("Running cleaing routines for",app)
+                    subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                    subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                    subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                break
+            else:
+                actualIndex = int(choice) - 1
+                appName = appFolders[actualIndex]
+                os.chdir(appDir + appName)
+
+                print("Running cleaing routines for",appName)
+                subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                break
+        elif continueClean == 'n':
+            break
 
 #TODO USE GLOB TO GET LATEST SRC AND INSTALL WITH OS.SYSTEM
 #https://stackoverflow.com/questions/52693107/python-script-for-installing-aur-packages
@@ -136,6 +178,7 @@ def updateApps(updateAppNeeds):
         latestSource = max(listOfFiles, key=os.path.getctime)
         #install the compiled source
         os.system("sudo pacman -U " + latestSource)
+
         
         
             
@@ -163,13 +206,6 @@ def getGitUrls():
             print(".git directory does not exists and is probably not a git repository")
     return False
 
-def resetHead():
-    for folder in folders:
-        os.chdir(appDir + folder)
-        print(subprocess.run(["git","fetch","origin"],capture_output=True))
-        print(subprocess.run(["git","reset","--hard","origin/master"],capture_output=True))
-    return False
-
 def restart():
     restart = input("Would you like to do something else? (y or n) ")
     while True:
@@ -191,9 +227,9 @@ def main():
     # print(folders)
     choice = getUserChoice(menu)
     if choice == "1":
-        updateAppNeeds = runOption(choice, updateAppNeeds)
+        updateAppNeeds = runOption(choice, updateAppNeeds,folders)
     else:
-        runOption(choice, updateAppNeeds)
+        runOption(choice, updateAppNeeds, folders)
 
     restart()
 
@@ -212,12 +248,7 @@ def main():
     #             continue
 
 def test():
-    choice = input("type shit")
-    print(choice.isdigit())
-    while choice.isdigit():
-        print("Please enter valid option.")
-        printMenu(menu)
-        choice = input("What option would you like to pick?  ")
+    cleanApps(folders)
     
 main()
 # test()
