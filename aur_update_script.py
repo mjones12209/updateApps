@@ -4,12 +4,14 @@ import re
 import glob
 import pickle
 import sys
+import readchar
 
 #directories / files for app
 appDir=os.environ['HOME'] + '/AUR/update-apps/'  #where are your apps located
 updateAppsNeeds = []
 gitList = os.environ['HOME'] + "/AUR/gitUrls"
 appUpdates = os.environ['HOME'] + "/AUR/appUpdates"
+menu = ["1. Update Git Origin", "2. Update Apps ", "3. View Report","4. Clean App Directories"] 
 
 def enumerateAppDirs():
     filteredDirs = []
@@ -27,8 +29,8 @@ def printTitle():
     title = "Welcome to Update Apps AUR Helper"
     print('-' * len(title),"\n",title,"\n",'-' * len(title))
 
-def printMenu():
-    menu = ["1. Update Git Origin", "2. Update Apps ", "3. View Report","4. Clean App Directories"] #"2. Get list of AUR git repository urls",  "3. Reset Git Head"
+def printMenu(menu):
+    #"2. Get list of AUR git repository urls",  "3. Reset Git Head"
     for item in menu:
         print(item)
 
@@ -40,19 +42,24 @@ def loadApps():
     else:
             print("There are no apps in the saved array that need to be loaded.")       
 
-def getUserChoice():
+def getUserChoice(menu):
 
     while True:
-        choice = sys.stdin.read(1) #input("What option would you like to pick?  ")
-        match = re.search(r"[1-4]{1}",choice)
-        if not match:
-            print("Please enter valid option.")
-            continue
-        elif match:
-            break
+        choice = input("What option would you like to pick?  ")
+        if choice.isdigit():
+            check = int(choice)
+            match = re.search(r"[1-4]{1}",choice)
+            if not match or check < 1 and check > len(menu)+1:
+                print("Please enter valid option.")
+                continue
+            elif match or check < 1 and check > len(menu)+1:
+                break
+            else:
+                print("Error no match found")
+                main()
         else:
-            print("Error no match found")
-            main()
+            print("Please enter a valid option")
+            continue
 
     return choice
 
@@ -163,19 +170,7 @@ def resetHead():
         print(subprocess.run(["git","reset","--hard","origin/master"],capture_output=True))
     return False
 
-
-def main():
-    printTitle()
-    printMenu()
-    updateAppNeeds = loadApps()
-    # print(updateAppNeeds)
-    # print(folders)
-    choice = getUserChoice()
-    if choice == "1":
-        updateAppNeeds = runOption(choice, updateAppNeeds)
-    else:
-        runOption(choice, updateAppNeeds)
-
+def restart():
     restart = input("Would you like to do something else? (y or n) ")
     while True:
         if restart != 'y' and restart != 'n':
@@ -187,6 +182,20 @@ def main():
             break
         elif restart == 'n':
             break
+
+def main():
+    printTitle()
+    printMenu(menu)
+    updateAppNeeds = loadApps()
+    # print(updateAppNeeds)
+    # print(folders)
+    choice = getUserChoice(menu)
+    if choice == "1":
+        updateAppNeeds = runOption(choice, updateAppNeeds)
+    else:
+        runOption(choice, updateAppNeeds)
+
+    restart()
 
     # if updateAppNeeds:
     #     print("The follow apps needs to be updated: " + '\n', updateAppNeeds)
@@ -207,7 +216,7 @@ def test():
     print(choice.isdigit())
     while choice.isdigit():
         print("Please enter valid option.")
-        printMenu()
+        printMenu(menu)
         choice = input("What option would you like to pick?  ")
     
 main()
