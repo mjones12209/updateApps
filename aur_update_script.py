@@ -112,10 +112,8 @@ def printReport(report):
 def cleanApps(appFolders):
 
     appFolders.append("All Apps")
-    enumeratedFolders = enumerate(appFolders)
-    # print(appFolders[22])
 
-    for index,app in enumeratedFolders:
+    for index,app in enumerate(appFolders):
         print(str(index+1) + '.',app)
         lastIndexOfAppFolders = index
 
@@ -138,12 +136,14 @@ def cleanApps(appFolders):
             continue
         elif continueClean == 'y':
             if choice == len(appFolders):
-                for app in appFolders:
+                appFolders.pop()
+                for app in appFolders: #TODO FIX THISSSSSSSS
                     os.chdir(appDir + app)
                     print("Running cleaing routines for",app)
-                    subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                    subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                    subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                    print("Deleted all app folders")
+                    # subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                    # subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                    # subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
                 break
             else:
                 actualIndex = int(choice) - 1
@@ -158,10 +158,7 @@ def cleanApps(appFolders):
         elif continueClean == 'n':
             break
 
-#TODO USE GLOB TO GET LATEST SRC AND INSTALL WITH OS.SYSTEM
-#https://stackoverflow.com/questions/52693107/python-script-for-installing-aur-packages
-#https://docs.python.org/3/library/subprocess.html#subprocess.run
-#https://stackoverflow.com/questions/39327032/how-to-get-the-latest-file-in-a-folder-using-python
+#TODO Track when an App had been updated!!!
 def updateApps(updateAppNeeds):
     print("Runnings updateApps")
     print(updateAppNeeds)
