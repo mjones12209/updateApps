@@ -109,6 +109,11 @@ def printReport(report):
     print("You have the following apps that need to be updated:  ")
     print(report)
 
+def runSubProcessClean():
+    subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+    subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+    subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+
 def cleanApps(appFolders):
 
     appFolders.append("All Apps")
@@ -135,25 +140,19 @@ def cleanApps(appFolders):
             print("Please enter y or n")
             continue
         elif continueClean == 'y':
-            if choice == len(appFolders):
+            if choice == str(len(appFolders)):
                 appFolders.pop()
-                for app in appFolders: #TODO FIX THISSSSSSSS
+                for app in appFolders:
                     os.chdir(appDir + app)
                     print("Running cleaing routines for",app)
-                    print("Deleted all app folders")
-                    # subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                    # subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                    # subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                    runSubProcessClean()
                 break
             else:
                 actualIndex = int(choice) - 1
                 appName = appFolders[actualIndex]
                 os.chdir(appDir + appName)
-
                 print("Running cleaing routines for",appName)
-                subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-                subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                runSubProcessClean()
                 break
         elif continueClean == 'n':
             break
@@ -161,7 +160,7 @@ def cleanApps(appFolders):
 #TODO Track when an App had been updated!!!
 def updateApps(updateAppNeeds):
     print("Runnings updateApps")
-    print(updateAppNeeds)
+    # print(updateAppNeeds)
     #clears directory
     for app in updateAppNeeds:
         os.chdir(appDir + app)
@@ -247,5 +246,5 @@ def main():
 def test():
     cleanApps(folders)
     
-main()
-# test()
+# main()
+test()
