@@ -109,14 +109,32 @@ def printReport(report):
     print("You have the following apps that need to be updated:  ")
     print(report)
 
-def runSubProcessClean():
-    subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-    subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-    subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+def runSubProcess(commands):
+    child = subprocess.Popen(commands,stdin=subprocess.PIPE,stdout=subprocess.PIPE,shell=True,executable="/bin/bash")
+    proc_stdout = child.communicate()[0].strip()
+    print(proc_stdout)
+    returnCode = child.returncode
+    return returnCode
+
+# def runSubProcessClean():
+ 
+#     subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,shell=True,executable="/bin/bash")
+#     # subprocess.run(["git","fetch","origin"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,shell=)
+#     # subprocess.run(["git","reset","--hard","origin/master"],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+#     # subprocess.run(['git','clean','-f'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+
+# def runSubProcessUpdate(options):
+#     child = subprocess.Popen(options.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,executable="/bin/bash")
+#     returnCode = child.returncode
+#     return returnCode
 
 def cleanApps(appFolders):
 
-    appFolders.append("All Apps")
+    try:
+        appFolders.index("All Apps")
+    except:
+        appFolders.append("All Apps")
+    
 
     for index,app in enumerate(appFolders):
         print(str(index+1) + '.',app)
@@ -145,35 +163,50 @@ def cleanApps(appFolders):
                 for app in appFolders:
                     os.chdir(appDir + app)
                     print("Running cleaing routines for",app)
-                    runSubProcessClean()
+                    os.system("git fetch origin; git reset --hard origin/master; git clean -f")
                 break
             else:
                 actualIndex = int(choice) - 1
                 appName = appFolders[actualIndex]
                 os.chdir(appDir + appName)
                 print("Running cleaing routines for",appName)
-                runSubProcessClean()
+                os.system("git fetch origin; git reset --hard origin/master; git clean -f")
                 break
         elif continueClean == 'n':
             break
 
-#TODO Track when an App had been updated!!!
+def getLatestSource(app):
+    listOfFiles = glob.glob(appDir + app + '/*.tar.*')
+    latestSource = max(listOfFiles, key=os.path.getctime)
+    return latestSource
+
 def updateApps(updateAppNeeds):
     print("Runnings updateApps")
-    # print(updateAppNeeds)
-    #clears directory
+    print(updateAppNeeds)
+    updateAppNeedsUpdated = updateAppNeeds
     for app in updateAppNeeds:
+        
         os.chdir(appDir + app)
         #compiles source with makepkg
         print("Currentworking diretory: ", os.getcwd())
         print("Compiling source...")
-        subprocess.run(['makepkg','-s'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+        makepkgReturnCode = None
+        makepkgReturnCode = os.WEXITSTATUS(os.system("makepkg -s --skippgpcheck"))
+        while makepkgReturnCode is None:
+            pass
         #find the latest tar.xz file
-        listOfFiles = glob.glob(appDir + app + '/*.tar.*')
-        print(listOfFiles)
-        latestSource = max(listOfFiles, key=os.path.getctime)
+        latestSource = getLatestSource(app)
         #install the compiled source
-        os.system("sudo pacman -U " + latestSource)
+        pacmanReturnCode = None
+        pacmanReturnCode = os.WEXITSTATUS(os.system(f"sudo pacman -U {latestSource}"))
+        while pacmanReturnCode is None:
+            pass
+        if pacmanReturnCode == 0:
+            updateAppNeedsUpdated.remove(app)
+            pickle.dump(updateAppNeedsUpdated,open(appDir + "updateAppNeeds.dat", "wb"))
+        else:
+            print("There was an error while installing the package")
+    
 
         
         
@@ -219,8 +252,6 @@ def main():
     printTitle()
     printMenu(menu)
     updateAppNeeds = loadApps()
-    # print(updateAppNeeds)
-    # print(folders)
     choice = getUserChoice(menu)
     if choice == "1":
         updateAppNeeds = runOption(choice, updateAppNeeds,folders)
@@ -244,7 +275,11 @@ def main():
     #             continue
 
 def test():
-    cleanApps(folders)
-    
-# main()
-test()
+    updateAppNeeds = loadApps()
+    updateAppNeeds.remove("teamviewer")
+    updateAppNeeds.remove("slack-desktop")
+    pickle.dump(updateAppNeeds,open("updateAppNeeds.dat", "wb"))
+    print(updateAppNeeds)
+    # updateApps(updateAppNeeds)
+main()
+# test()
