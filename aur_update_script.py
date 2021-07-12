@@ -3,14 +3,12 @@ import os
 import re
 import glob
 import pickle
-import sys
-import readchar
 
 #directories / files for app
-appDir=os.environ['HOME'] + '/AUR/update-apps/'  #where are your apps located
+appDir=os.environ['HOME'] + '/aur/'  #where are your apps located
 updateAppsNeeds = []
-gitList = os.environ['HOME'] + "/AUR/gitUrls"
-appUpdates = os.environ['HOME'] + "/AUR/appUpdates"
+gitList = os.environ['HOME'] + "/aur/gitUrls"
+appUpdates = os.environ['HOME'] + "/aur/appUpdates"
 menu = ["1. Update Git Origin", "2. Update Apps ", "3. View Report","4. Clean App Directories"] 
 
 def enumerateAppDirs():
